@@ -77,7 +77,7 @@ void changeColorspace( Tree &tree, Point &center, unsigned char * c, float * c2,
   }
 }
 
-void generateImages( vector< vector< vector< unsigned char > > > &brickImages, vector< pair< int, int > > &dimensions )
+void generateImages( vector< vector< vector< unsigned char > > > &brickImages, vector< pair< int, int > > &dimensions, vector< vector< bool > > &brickUsed )
 {
   ifstream shapeData( "legoData/studsOut.dat", ios::binary );
 
@@ -104,47 +104,124 @@ void generateImages( vector< vector< vector< unsigned char > > > &brickImages, v
   ProgressBar *generatingImages = new ProgressBar( 14*68, "Loading images" );
 
   for( int i = 0, index = 0; i < 14; ++i )
-  {
+  {    
     for( int j = 0; j < 68; ++j )
     {
       shapeData.read( (char *)&len, sizeof(size_t) );
 
-      void * data = (void *) malloc (sizeof(unsigned char)*len);
-
-      shapeData.read( (char *)data, len*sizeof(char) );
-
-      VipsBlob *blob = vips_blob_new( NULL, data, len );
-
-      VImage image = VImage::pngload_buffer(blob).resize(si);
-
-      unsigned char * c;
-
-      if( rotImage[i] < 2 )
+      // If both colors are used
+      if( brickUsed[index][j] && ( rotImage[i] == 0 || brickUsed[index+1][j] ) )
       {
-        c = ( unsigned char * )image.data();
-        dimensions[index] = pair< int, int >( image.width(), image.height() );
+        void * data = (void *) malloc (sizeof(unsigned char)*len);
+
+        shapeData.read( (char *)data, len*sizeof(char) );
+
+        VipsBlob *blob = vips_blob_new( NULL, data, len );
+
+        VImage image = VImage::pngload_buffer(blob).resize(si);
+
+        unsigned char * c;
+
+        if( rotImage[i] < 2 )
+        {
+          c = ( unsigned char * )image.data();
+          dimensions[index] = pair< int, int >( image.width(), image.height() );
+        }
+        else
+        {
+          c = (unsigned char *)image.rot(VIPS_ANGLE_D90).data();
+          dimensions[index] = pair< int, int >( image.height(), image.width() );
+        }
+
+        brickImages[index].push_back( vector< unsigned char >(c, c + 3*image.width()*image.height() ) );
+
+        if( rotImage[i] == 1 )
+        {
+          dimensions[index+1] = pair< int, int >( image.height(), image.width() );
+
+          c = (unsigned char *)image.rot(VIPS_ANGLE_D90).data();
+          brickImages[index+1].push_back( vector< unsigned char >(c, c + 3*image.width()*image.height() ) );
+        }
+        else if( rotImage[i] == 2 )
+        {
+          dimensions[index+1] = pair< int, int >( image.width(), image.height() );
+
+          c = ( unsigned char * )image.data();
+          brickImages[index+1].push_back( vector< unsigned char >(c, c + 3*image.width()*image.height() ) );
+        }
       }
+      // First is used, second is not
+      else if( index < 24 && brickUsed[index][j] && !brickUsed[index+1][j] )
+      {
+        void * data = (void *) malloc (sizeof(unsigned char)*len);
+
+        shapeData.read( (char *)data, len*sizeof(char) );
+
+        VipsBlob *blob = vips_blob_new( NULL, data, len );
+
+        VImage image = VImage::pngload_buffer(blob).resize(si);
+
+        unsigned char * c;
+
+        if( rotImage[i] < 2 )
+        {
+          c = ( unsigned char * )image.data();
+          dimensions[index] = pair< int, int >( image.width(), image.height() );
+        }
+        else
+        {
+          c = (unsigned char *)image.rot(VIPS_ANGLE_D90).data();
+          dimensions[index] = pair< int, int >( image.height(), image.width() );
+        }
+
+        brickImages[index].push_back( vector< unsigned char >(c, c + 3*image.width()*image.height() ) );
+
+        if( rotImage[i] > 0 )
+        {
+          brickImages[index+1].resize(brickImages[index+1].size()+1);
+        }
+      }
+      // First is not used, second is
+      else if( index < 24 && !brickUsed[index][j] && brickUsed[index+1][j] )
+      {
+        void * data = (void *) malloc (sizeof(unsigned char)*len);
+
+        shapeData.read( (char *)data, len*sizeof(char) );
+
+        VipsBlob *blob = vips_blob_new( NULL, data, len );
+
+        VImage image = VImage::pngload_buffer(blob).resize(si);
+
+        unsigned char * c;
+
+        brickImages[index].resize(brickImages[index].size()+1);
+
+        if( rotImage[i] == 1 )
+        {
+          dimensions[index+1] = pair< int, int >( image.height(), image.width() );
+
+          c = (unsigned char *)image.rot(VIPS_ANGLE_D90).data();
+          brickImages[index+1].push_back( vector< unsigned char >(c, c + 3*image.width()*image.height() ) );
+        }
+        else if( rotImage[i] == 2 )
+        {
+          dimensions[index+1] = pair< int, int >( image.width(), image.height() );
+
+          c = ( unsigned char * )image.data();
+          brickImages[index+1].push_back( vector< unsigned char >(c, c + 3*image.width()*image.height() ) );
+        }
+      }
+      // Neither are used
       else
       {
-        c = (unsigned char *)image.rot(VIPS_ANGLE_D90).data();
-        dimensions[index] = pair< int, int >( image.height(), image.width() );
-      }
+        brickImages[index].resize(brickImages[index].size()+1);
+        
+        if( rotImage[i] > 0 )
+        {
+          brickImages[index+1].resize(brickImages[index+1].size()+1);
+        }
 
-      brickImages[index].push_back( vector< unsigned char >(c, c + 3*image.width()*image.height() ) );
-
-      if( rotImage[i] == 1 )
-      {
-        dimensions[index+1] = pair< int, int >( image.height(), image.width() );
-
-        c = (unsigned char *)image.rot(VIPS_ANGLE_D90).data();
-        brickImages[index+1].push_back( vector< unsigned char >(c, c + 3*image.width()*image.height() ) );
-      }
-      else if( rotImage[i] == 2 )
-      {
-        dimensions[index+1] = pair< int, int >( image.width(), image.height() );
-
-        c = ( unsigned char * )image.data();
-        brickImages[index+1].push_back( vector< unsigned char >(c, c + 3*image.width()*image.height() ) );
+        shapeData.seekg( len, ios::cur );
       }
 
       generatingImages->Increment();
@@ -156,7 +233,7 @@ void generateImages( vector< vector< vector< unsigned char > > > &brickImages, v
   generatingImages->Finish();
 }
 
-void buildTopLevel( string outputImage, int start, int end, int outputWidth, int outputHeight, vector< vector< int > > &brickData, vector< vector< vector< unsigned char > > > &brickImages, int maxTileWidth, int maxTileHeight, ProgressBar *topLevel )
+void buildTopLevel( string outputImage, int start, int end, int outputWidth, int outputHeight, vector< vector< int > > &brickData, vector< pair< int, int > > &dimensions, vector< vector< vector< unsigned char > > > &brickImages, int maxTileWidth, int maxTileHeight, ProgressBar *topLevel )
 {
   bool singleImage = (maxTileWidth > 256);
 
@@ -178,10 +255,10 @@ void buildTopLevel( string outputImage, int start, int end, int outputWidth, int
 
         int brick = brickData[k][0];
         int colorIndex = brickData[k][1];
-        int bh = brickData[k][2];
-        int bw = brickData[k][3];
-        int bi = brickData[k][4];
-        int bj = brickData[k][5];
+        int bh = dimensions[brick].second;
+        int bw = dimensions[brick].first;
+        int bi = brickData[k][2];
+        int bj = brickData[k][3];
 
         if( bj >= tileOffsetX + tileWidth || bj + bw < tileOffsetX || bi >= tileOffsetY + tileHeight || bi + bh < tileOffsetY ) continue;
 
@@ -225,14 +302,14 @@ void buildTopLevel( string outputImage, int start, int end, int outputWidth, int
   }
 }
 
-void buildImage( string outputImage, int outputWidth, int outputHeight, vector< vector< int > > &brickData, vector< vector< vector< unsigned char > > > &brickImages )
+void buildImage( string outputImage, int outputWidth, int outputHeight, vector< vector< int > > &brickData, vector< pair< int, int > > &dimensions, vector< vector< vector< unsigned char > > > &brickImages )
 {
   // Save image as static image or zoomable image
   if( vips_foreign_find_save( outputImage.c_str() ) != NULL )
   {
     ProgressBar *topLevel = new ProgressBar(brickData.size(), "Generating image");
 
-    buildTopLevel( outputImage, 0, outputHeight, outputWidth, outputHeight, brickData, brickImages, outputWidth, outputHeight, topLevel );
+    buildTopLevel( outputImage, 0, outputHeight, outputWidth, outputHeight, brickData, dimensions, brickImages, outputWidth, outputHeight, topLevel );
   }
   else
   {
@@ -257,7 +334,7 @@ void buildImage( string outputImage, int outputWidth, int outputHeight, vector< 
       start = (start / 256 ) * 256;
       if( k+1 < threads ) end = (end / 256 ) * 256;
 
-      ret[k] = async( launch::async, &buildTopLevel, string(outputImage).append("_files/"+to_string(level)+"/"), start, end, outputWidth, outputHeight, ref(brickData), ref(brickImages), 256, 256, topLevel );
+      ret[k] = async( launch::async, &buildTopLevel, string(outputImage).append("_files/"+to_string(level)+"/"), start, end, outputWidth, outputHeight, ref(brickData), ref(dimensions), ref(brickImages), 256, 256, topLevel );
     }
 
     // Wait for threads to finish
@@ -346,8 +423,6 @@ void generateOutput( vector< vector< int > > mosaic, string outputImage )
   vector< vector< vector< unsigned char > > > brickImages(25);
   vector< pair< int, int > > dimensions(25);
 
-  generateImages( brickImages, dimensions );
-
   size_t lastindex = outputImage.find_last_of("."); 
   string outputFile = outputImage.substr(0, lastindex).append(".ldr"); 
 
@@ -360,6 +435,7 @@ void generateOutput( vector< vector< int > > mosaic, string outputImage )
   int height2 = (int)ceil(height*round(77*si));
 
   vector< vector< int > > brickData;
+  vector< vector< bool > > brickUsed(25,vector< bool >(68,false));
 
   for( int brick = 0; brick < numBricks; ++brick )
   {
@@ -404,9 +480,6 @@ void generateOutput( vector< vector< int > > mosaic, string outputImage )
           }
         }
 
-        int bh = dimensions[brick].second;
-        int bw = dimensions[brick].first;
-
         int bi = round(77*si)*i;
         int bj = round(77*si)*j;
 
@@ -421,7 +494,9 @@ void generateOutput( vector< vector< int > > mosaic, string outputImage )
           }
         }
 
-        brickData.push_back({brick,colorIndex,bh,bw,bi,bj});
+        brickData.push_back({brick,colorIndex,bi,bj});
+
+        brickUsed[brick][colorIndex] = true;
 
         output << " 1 " << squareColor << " " << j*20+w*10 << " 0 " << i*20+h*10 << brickNames[brick] << endl;
       }
@@ -435,9 +510,6 @@ void generateOutput( vector< vector< int > > mosaic, string outputImage )
       if( mosaic[i][j] >= 0 )
       {
         output << " 1 " << mosaic[i][j] << " " << j*20+10 << " 0 " << i*20+10 << " 1 0 0 0 1 0 0 0 1 3024.dat\n";
-
-        int bh = dimensions[24].second;
-        int bw = dimensions[24].first;
 
         int bi = round(77*si)*i;
         int bj = round(77*si)*j;
@@ -453,14 +525,18 @@ void generateOutput( vector< vector< int > > mosaic, string outputImage )
           }
         }
 
-        brickData.push_back({24,colorIndex,bh,bw,bi,bj});
+        brickData.push_back({24,colorIndex,bi,bj});
+
+        brickUsed[24][colorIndex] = true;
       }
     }
   }
 
   output.close();
 
-  buildImage( outputImage, width2, height2, brickData, brickImages );
+  generateImages( brickImages, dimensions, brickUsed );
+
+  buildImage( outputImage, width2, height2, brickData, dimensions, brickImages );
 }
 
 double de00( int r, int g, int b, int rv, int gv, int bv )
@@ -644,7 +720,7 @@ void generateLegoMosaic( string inputImage, string outputImage, int numAcross, b
   generateOutput( mosaic, outputImage );
 }
 
-void generateImages2( vector< vector< vector< unsigned char > > > &brickImages, vector< pair< int, int > > &dimensions )
+void generateImages2( vector< vector< vector< unsigned char > > > &brickImages, vector< pair< int, int > > &dimensions, vector< vector< bool > > &brickUsed )
 {
   ifstream shapeData( "legoData/sidesOut.dat", ios::binary );
 
@@ -660,21 +736,63 @@ void generateImages2( vector< vector< vector< unsigned char > > > &brickImages, 
     {
       shapeData.read( (char *)&len, sizeof(size_t) );
 
-      void * data = (void *) malloc (sizeof(unsigned char)*len);
+      if( brickUsed[i][j] && brickUsed[i+18][j] )
+      {
+        void * data = (void *) malloc (sizeof(unsigned char)*len);
 
-      shapeData.read( (char *)data, len*sizeof(char) );
+        shapeData.read( (char *)data, len*sizeof(char) );
 
-      VipsBlob *blob = vips_blob_new( NULL, data, len );
+        VipsBlob *blob = vips_blob_new( NULL, data, len );
 
-      VImage image = VImage::pngload_buffer(blob).resize(si);
+        VImage image = VImage::pngload_buffer(blob).resize(si);
 
-      unsigned char * c = ( unsigned char * )image.data();
-      dimensions[i] = pair< int, int >( image.width(), image.height() );
-      brickImages[i].push_back( vector< unsigned char >(c, c + 3*image.width()*image.height() ) );
+        unsigned char * c = ( unsigned char * )image.data();
+        dimensions[i] = pair< int, int >( image.width(), image.height() );
+        brickImages[i].push_back( vector< unsigned char >(c, c + 3*image.width()*image.height() ) );
 
-      c = (unsigned char *)image.rot(VIPS_ANGLE_D270).data();
-      dimensions[i+18] = pair< int, int >( image.height(), image.width() );
-      brickImages[i+18].push_back( vector< unsigned char >(c, c + 3*image.width()*image.height() ) );   
+        c = (unsigned char *)image.rot(VIPS_ANGLE_D270).data();
+        dimensions[i+18] = pair< int, int >( image.height(), image.width() );
+        brickImages[i+18].push_back( vector< unsigned char >(c, c + 3*image.width()*image.height() ) );   
+      }
+      else if( brickUsed[i][j] )
+      {
+        void * data = (void *) malloc (sizeof(unsigned char)*len);
+
+        shapeData.read( (char *)data, len*sizeof(char) );
+
+        VipsBlob *blob = vips_blob_new( NULL, data, len );
+
+        VImage image = VImage::pngload_buffer(blob).resize(si);
+
+        unsigned char * c = ( unsigned char * )image.data();
+        dimensions[i] = pair< int, int >( image.width(), image.height() );
+        brickImages[i].push_back( vector< unsigned char >(c, c + 3*image.width()*image.height() ) );
+
+        brickImages[i+18].resize(brickImages[i+18].size()+1);
+      }
+      else if( brickUsed[i+18][j] )
+      {
+        void * data = (void *) malloc (sizeof(unsigned char)*len);
+
+        shapeData.read( (char *)data, len*sizeof(char) );
+
+        VipsBlob *blob = vips_blob_new( NULL, data, len );
+
+        VImage image = VImage::pngload_buffer(blob).resize(si);
+
+        unsigned char * c = ( unsigned char * )image.rot(VIPS_ANGLE_D270).data();
+        dimensions[i+18] = pair< int, int >( image.height(), image.width() );
+        brickImages[i+18].push_back( vector< unsigned char >(c, c + 3*image.width()*image.height() ) );
+
+        brickImages[i].resize(brickImages[i].size()+1);
+      }
+      else
+      {
+        shapeData.seekg( len, ios::cur );
+
+        brickImages[i].resize(brickImages[i].size()+1);
+        brickImages[i+18].resize(brickImages[i+18].size()+1);
+      }
 
       generatingImages->Increment();
     }
@@ -688,8 +806,6 @@ void generateOutput2( vector< vector< int > > &mosaic1, vector< vector< int > > 
   vector< vector< vector< unsigned char > > > brickImages(36);
   vector< pair< int, int > > dimensions(36);
 
-  generateImages2( brickImages, dimensions );
-
   size_t lastindex = outputImage.find_last_of("."); 
   string outputFile = outputImage.substr(0, lastindex).append(".ldr"); 
 
@@ -702,6 +818,7 @@ void generateOutput2( vector< vector< int > > &mosaic1, vector< vector< int > > 
   int height2 = (int)ceil(mosaic2.size()*round(77*si));
 
   vector< vector< int > > brickData;
+  vector< vector< bool > > brickUsed(36,vector< bool >(68,false));
 
   for( int brick = 0; brick < 16; ++brick )
   {
@@ -754,9 +871,6 @@ void generateOutput2( vector< vector< int > > &mosaic1, vector< vector< int > > 
           }
         }
 
-        int bh = dimensions[brick].second;
-        int bw = dimensions[brick].first;
-
         int bi = floor(30.8*si*i);
         int bj = floor(77.0*si*j);
 
@@ -771,7 +885,8 @@ void generateOutput2( vector< vector< int > > &mosaic1, vector< vector< int > > 
           }
         }
 
-        brickData.push_back({brick,colorIndex,bh,bw,bi,bj});
+        brickData.push_back({brick,colorIndex,bi,bj});
+        brickUsed[brick][colorIndex] = true;
 
         output << " 1 " << squareColor << " " << j*20+w*10 << " " << i*8 << " 0" << " 1 0 0 0 1 0 0 0 1 " << brickNames3[brick] << endl;
       }
@@ -786,9 +901,6 @@ void generateOutput2( vector< vector< int > > &mosaic1, vector< vector< int > > 
       {
         if( i < 1 || mosaic1[i-1][j] == -1 )
         {
-          int bh = dimensions[16].second;
-          int bw = dimensions[16].first;
-
           int bi = floor(30.8*si*i);
           int bj = floor(77.0*si*j);
 
@@ -803,15 +915,13 @@ void generateOutput2( vector< vector< int > > &mosaic1, vector< vector< int > > 
             }
           }
 
-          brickData.push_back({16,colorIndex,bh,bw,bi,bj});
+          brickData.push_back({16,colorIndex,bi,bj});
+          brickUsed[16][colorIndex] = true;
 
           output << " 1 " << mosaic1[i][j] << " " << j*20+10 << " " << i*8 << " 0" << " 1 0 0 0 1 0 0 0 1 30039.dat\n";
         }
         else
         {
-          int bh = dimensions[17].second;
-          int bw = dimensions[17].first;
-
           int bi = floor(30.8*si*i);
           int bj = floor(77.0*si*j);
 
@@ -826,7 +936,8 @@ void generateOutput2( vector< vector< int > > &mosaic1, vector< vector< int > > 
             }
           }
 
-          brickData.push_back({17,colorIndex,bh,bw,bi,bj});
+          brickData.push_back({17,colorIndex,bi,bj});
+          brickUsed[17][colorIndex] = true;
 
           output << " 1 " << mosaic1[i][j] << " " << j*20+10 << " " << i*8 << " 0" << " 1 0 0 0 1 0 0 0 1 3024.dat\n";
         }
@@ -888,10 +999,6 @@ void generateOutput2( vector< vector< int > > &mosaic1, vector< vector< int > > 
           }
         }
 
-
-        int bh = dimensions[brick+18].second;
-        int bw = dimensions[brick+18].first;
-
         int bi = floor(77.0*si*i);
         int bj = floor(30.8*si*j);
 
@@ -906,7 +1013,8 @@ void generateOutput2( vector< vector< int > > &mosaic1, vector< vector< int > > 
           }
         }
 
-        brickData.push_back({brick+18,colorIndex,bh,bw,bi,bj});
+        brickData.push_back({brick+18,colorIndex,bi,bj});
+        brickUsed[brick+18][colorIndex] = true;
 
         output << " 1 " << squareColor << " " << j*8 << " " << i*20+h*10 << " 0" << " 0 1 0 -1 0 0 0 0 1 " << brickNames3[brick] << endl;
       }
@@ -921,9 +1029,6 @@ void generateOutput2( vector< vector< int > > &mosaic1, vector< vector< int > > 
       {
         if( j < 1 || mosaic2[i][j-1] == -1 )
         {
-          int bh = dimensions[34].second;
-          int bw = dimensions[34].first;
-
           int bi = floor(77.0*si*i);
           int bj = floor(30.8*si*j);
 
@@ -938,15 +1043,13 @@ void generateOutput2( vector< vector< int > > &mosaic1, vector< vector< int > > 
             }
           }
 
-          brickData.push_back({34,colorIndex,bh,bw,bi,bj});
+          brickData.push_back({34,colorIndex,bi,bj});
+          brickUsed[34][colorIndex] = true;
 
           output << " 1 " << mosaic2[i][j] << " " << j*8 << " " << i*20+10 << " 0" << " 0 1 0 -1 0 0 0 0 1 30039.dat\n";
         }
         else
         {
-          int bh = dimensions[35].second;
-          int bw = dimensions[35].first;
-
           int bi = floor(77.0*si*i);
           int bj = floor(30.8*si*j);
 
@@ -961,7 +1064,8 @@ void generateOutput2( vector< vector< int > > &mosaic1, vector< vector< int > > 
             }
           }
 
-          brickData.push_back({35,colorIndex,bh,bw,bi,bj});
+          brickData.push_back({35,colorIndex,bi,bj});
+          brickUsed[35][colorIndex] = true;
 
           output << " 1 " << mosaic2[i][j] << " " << j*8 << " " << i*20+10 << " 0" << " 0 1 0 -1 0 0 0 0 1 3024.dat\n";
         }
@@ -971,7 +1075,9 @@ void generateOutput2( vector< vector< int > > &mosaic1, vector< vector< int > > 
 
   output.close();
 
-  buildImage( outputImage, width2, height2, brickData, brickImages );
+  generateImages2( brickImages, dimensions, brickUsed );
+
+  buildImage( outputImage, width2, height2, brickData, dimensions, brickImages );
 }
 
 void bestSquare( int i1, int j1, int width, int height, vector< vector< vector< float > > > &floatData, vector< vector< vector< float > > > &floatData2, vector< vector< int > > &mosaic1, vector< vector< int > > &mosaic2, bool dither, float colors[][3], vector< int > colorsToUse )
