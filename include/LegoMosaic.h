@@ -12,6 +12,8 @@
 #include <set>
 #include <tuple>
 #include <time.h>
+#include <mutex>
+#include <condition_variable>
 
 #include <vips/vips8>
 #include "progress_bar.hpp"
