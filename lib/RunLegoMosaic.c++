@@ -11,6 +11,8 @@ int main( int argc, char **argv )
 
     ValueArg<string> colorNameArg( "c", "colors", "Colors to use", false, "legoData/allColors.txt", "string", cmd);
 
+    SwitchArg randomizeArg( "r", "randomize", "Randomize the placement of the blocks", cmd, false );
+
     SwitchArg ditherArg( "d", "dither", "Use dithering in the mosaic", cmd, false );
 
     SwitchArg sidesOutArg( "s", "sidesOut", "Generate lego mosaic with sides faced outwards", cmd, false );
@@ -27,6 +29,7 @@ int main( int argc, char **argv )
 
     cmd.parse( argc, argv );
 
+    bool randomize                    = randomizeArg.getValue();
     bool dither                       = ditherArg.getValue();
     bool sidesOut                     = sidesOutArg.getValue();
     string inputName                  = pictureArg.getValue();
@@ -38,7 +41,7 @@ int main( int argc, char **argv )
 
     if( VIPS_INIT( argv[0] ) ) return( -1 );
 
-    RunLegoMosaic( inputName, outputName, numHorizontal, tileSize, sidesOut, dither, gamma, colorName );
+    RunLegoMosaic( inputName, outputName, numHorizontal, tileSize, sidesOut, dither, randomize, gamma, colorName );
   }
   catch (ArgException &e)  // catch any exceptions
   {

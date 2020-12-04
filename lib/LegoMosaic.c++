@@ -477,7 +477,7 @@ void buildImage( string outputImage, int outputWidth, int outputHeight, vector< 
   }
 }
 
-void generateOutput( vector< vector< int > > mosaic, string outputImage )
+void generateOutput( vector< vector< int > > mosaic, string outputImage, bool randomize )
 {
   vector< vector< vector< unsigned char > > > brickImages(25);
   vector< pair< int, int > > dimensions(25);
@@ -505,7 +505,7 @@ void generateOutput( vector< vector< int > > mosaic, string outputImage )
     iota( indices.begin(), indices.end(), 0 );
 
     // Shuffle the points so that patterens do not form
-    shuffle( indices.begin(), indices.end(), default_random_engine(0));
+    if( randomize ) shuffle( indices.begin(), indices.end(), default_random_engine(0));
 
     for( int k = 0; k < indices.size(); ++k )
     {
@@ -692,7 +692,7 @@ void legoMosaicThread( int threadIdx, int numThreads, int width, int height, flo
   }
 }
 
-void generateLegoMosaic( string inputImage, string outputImage, int numAcross, bool dither, double gamma, vector< int > &colorsToUse )
+void generateLegoMosaic( string inputImage, string outputImage, int numAcross, bool dither, bool randomize, double gamma, vector< int > &colorsToUse )
 {
   // Load input image
   VImage image = VImage::thumbnail((char *)inputImage.c_str(),numAcross,VImage::option()->set( "auto_rotate", true ));//.flip(VIPS_DIRECTION_HORIZONTAL);
@@ -797,7 +797,7 @@ void generateLegoMosaic( string inputImage, string outputImage, int numAcross, b
 
   buildingMosaic->Finish();
 
-  generateOutput( mosaic, outputImage );
+  generateOutput( mosaic, outputImage, randomize );
 }
 
 void generateImages2( vector< vector< vector< unsigned char > > > &brickImages, vector< pair< int, int > > &dimensions, vector< vector< bool > > &brickUsed )
@@ -881,7 +881,7 @@ void generateImages2( vector< vector< vector< unsigned char > > > &brickImages, 
   generatingImages->Finish();
 }
 
-void generateOutput2( vector< vector< int > > &mosaic1, vector< vector< int > > &mosaic2, string outputImage )
+void generateOutput2( vector< vector< int > > &mosaic1, vector< vector< int > > &mosaic2, string outputImage, bool randomize )
 {
   vector< vector< vector< unsigned char > > > brickImages(36);
   vector< pair< int, int > > dimensions(36);
@@ -909,7 +909,7 @@ void generateOutput2( vector< vector< int > > &mosaic1, vector< vector< int > > 
     iota( indices.begin(), indices.end(), 0 );
 
     // Shuffle the points so that patterens do not form
-    shuffle( indices.begin(), indices.end(), default_random_engine(0));
+    if( randomize ) shuffle( indices.begin(), indices.end(), default_random_engine(0));
 
     for( int k = 0; k < indices.size(); ++k )
     {
@@ -1043,7 +1043,7 @@ void generateOutput2( vector< vector< int > > &mosaic1, vector< vector< int > > 
     iota( indices.begin(), indices.end(), 0 );
 
     // Shuffle the points so that patterens do not form
-    shuffle( indices.begin(), indices.end(), default_random_engine(0));
+    if( randomize ) shuffle( indices.begin(), indices.end(), default_random_engine(0));
 
     for( int k = 0; k < indices.size(); ++k )
     {
@@ -1720,7 +1720,7 @@ void bestRow( int i1, int width, int height, vector< vector< vector< float > > >
   }
 }
 
-void legoMosaicThread2( int threadIdx, int numThreads, int width, int height, float colors[68][3], vector< vector< int > > &mosaic1, vector< vector< int > > &mosaic2, vector< vector< vector< float > > > &floatData, vector< vector< vector< float > > > &floatData2, vector< int > &colorsToUse, bool dither, condition_variable *cv, ProgressBar *buildingMosaic )
+void legoMosaicThread2( int threadIdx, int numThreads, int width, int height, float colors[68][3], vector< vector< int > > &mosaic1, vector< vector< int > > &mosaic2, vector< vector< vector< float > > > &floatData, vector< vector< vector< float > > > &floatData2, vector< int > &colorsToUse, bool dither, ProgressBar *buildingMosaic )
 {
   for( int i = threadIdx*10; i < height; i += numThreads*10 )
   {
@@ -1730,7 +1730,7 @@ void legoMosaicThread2( int threadIdx, int numThreads, int width, int height, fl
   }
 }
 
-void generateLegoMosaic2( string inputImage, string outputFile, int numAcross, bool dither, double gamma, vector< int > &colorsToUse )
+void generateLegoMosaic2( string inputImage, string outputFile, int numAcross, bool dither, bool randomize, double gamma, vector< int > &colorsToUse )
 {
   // Load input image
   VImage image = VImage::thumbnail((char *)inputImage.c_str(),(numAcross-numAcross%2)*5,VImage::option()->set( "auto_rotate", true ));//.flip(VIPS_DIRECTION_HORIZONTAL);
@@ -1830,11 +1830,9 @@ void generateLegoMosaic2( string inputImage, string outputFile, int numAcross, b
 
   ProgressBar *buildingMosaic = new ProgressBar(ceil((double)height/(10*threads)), "Building Mosaic");
   
-  condition_variable *cv = new condition_variable[threads];
-
   for( int k = 0; k < threads; ++k )
   {
-    ret2[k] = async( launch::async, &legoMosaicThread2, k, threads, width, height, colors, ref(mosaic1), ref(mosaic2), ref(floatData), ref(floatData2), ref(colorsToUse), dither, cv, buildingMosaic );
+    ret2[k] = async( launch::async, &legoMosaicThread2, k, threads, width, height, colors, ref(mosaic1), ref(mosaic2), ref(floatData), ref(floatData2), ref(colorsToUse), dither, buildingMosaic );
   }
 
   // Wait for threads to finish
@@ -1845,10 +1843,10 @@ void generateLegoMosaic2( string inputImage, string outputFile, int numAcross, b
 
   buildingMosaic->Finish();
 
-  generateOutput2( mosaic1, mosaic2, outputFile );
+  generateOutput2( mosaic1, mosaic2, outputFile, randomize );
 }
 
-void RunLegoMosaic( string inputName, string outputName, int numHorizontal, int tileSize, bool sidesOut, bool dither, double gamma, string colorName )
+void RunLegoMosaic( string inputName, string outputName, int numHorizontal, int tileSize, bool sidesOut, bool dither, bool randomize, double gamma, string colorName )
 {
   tileSize = max( tileSize, 5 );
   tileSize = min( tileSize, 77 );
@@ -1880,10 +1878,10 @@ void RunLegoMosaic( string inputName, string outputName, int numHorizontal, int 
 
   if( !sidesOut )
   {
-    generateLegoMosaic( inputName, outputName, numHorizontal, dither, gamma, colorsToUse );
+    generateLegoMosaic( inputName, outputName, numHorizontal, dither, randomize, gamma, colorsToUse );
   }
   else
   {
-    generateLegoMosaic2( inputName, outputName, numHorizontal, dither, gamma, colorsToUse );    
+    generateLegoMosaic2( inputName, outputName, numHorizontal, dither, randomize, gamma, colorsToUse );    
   }
 }
