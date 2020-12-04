@@ -894,7 +894,7 @@ void generateOutput2( vector< vector< int > > &mosaic1, vector< vector< int > > 
   int width = mosaic1[0].size();
   int height = mosaic1.size();
 
-  int width2 = (int)ceil(width*round(77*si));
+  int width2 = (int)ceil(width/5*round(77*si));
   int height2 = (int)ceil(mosaic2.size()*round(77*si));
 
   vector< vector< int > > brickData;
@@ -902,7 +902,7 @@ void generateOutput2( vector< vector< int > > &mosaic1, vector< vector< int > > 
 
   for( int brick = 0; brick < 16; ++brick )
   {
-    int w = brickSizes2[brick][0];
+    int w = brickSizes2[brick][0]*5;
     int h = brickSizes2[brick][1];
 
     vector< int > indices( (width-w+1)*(height-h+1) );
@@ -922,7 +922,7 @@ void generateOutput2( vector< vector< int > > &mosaic1, vector< vector< int > > 
 
       bool badColor = false;
 
-      for( int x = j; x < j + w && !badColor; ++x )
+      for( int x = j; x < j + w && !badColor; x+=5 )
       {
         if( brick < 11 && ( i < 1 || mosaic1[i-1][x] == -1 ) )
         {
@@ -932,7 +932,7 @@ void generateOutput2( vector< vector< int > > &mosaic1, vector< vector< int > > 
 
       for( int y = i; y < i + h && !badColor; ++y )
       {
-        for( int x = j; x < j + w && !badColor; ++x )
+        for( int x = j; x < j + w && !badColor; x+=5 )
         {
           if( mosaic1[y][x] != squareColor )
           {
@@ -945,14 +945,14 @@ void generateOutput2( vector< vector< int > > &mosaic1, vector< vector< int > > 
       {
         for( int y = i; y < i + h; ++y )
         {
-          for( int x = j; x < j + w; ++x )
+          for( int x = j; x < j + w; x+=5 )
           {
             mosaic1[y][x] = -2;
           }
         }
 
         int bi = floor(30.8*si*i);
-        int bj = floor(77.0*si*j);
+        int bj = floor(15.4*si*j);
 
         int colorIndex = 0;
 
@@ -968,7 +968,7 @@ void generateOutput2( vector< vector< int > > &mosaic1, vector< vector< int > > 
         brickData.push_back({brick,colorIndex,bi,bj});
         brickUsed[brick][colorIndex] = true;
 
-        output << " 1 " << squareColor << " " << j*20+w*10 << " " << i*8 << " 0" << " 1 0 0 0 1 0 0 0 1 " << brickNames3[brick] << endl;
+        output << " 1 " << squareColor << " " << j*4+w*2 << " " << i*8 << " 0" << " 1 0 0 0 1 0 0 0 1 " << brickNames3[brick] << endl;
       }
     }
   }
@@ -982,7 +982,7 @@ void generateOutput2( vector< vector< int > > &mosaic1, vector< vector< int > > 
         if( i < 1 || mosaic1[i-1][j] == -1 )
         {
           int bi = floor(30.8*si*i);
-          int bj = floor(77.0*si*j);
+          int bj = floor(15.4*si*j);
 
           int colorIndex = 0;
 
@@ -998,12 +998,12 @@ void generateOutput2( vector< vector< int > > &mosaic1, vector< vector< int > > 
           brickData.push_back({16,colorIndex,bi,bj});
           brickUsed[16][colorIndex] = true;
 
-          output << " 1 " << mosaic1[i][j] << " " << j*20+10 << " " << i*8 << " 0" << " 1 0 0 0 1 0 0 0 1 30039.dat\n";
+          output << " 1 " << mosaic1[i][j] << " " << j*4+10 << " " << i*8 << " 0" << " 1 0 0 0 1 0 0 0 1 30039.dat\n";
         }
         else
         {
           int bi = floor(30.8*si*i);
-          int bj = floor(77.0*si*j);
+          int bj = floor(15.4*si*j);
 
           int colorIndex = 0;
 
@@ -1019,7 +1019,7 @@ void generateOutput2( vector< vector< int > > &mosaic1, vector< vector< int > > 
           brickData.push_back({17,colorIndex,bi,bj});
           brickUsed[17][colorIndex] = true;
 
-          output << " 1 " << mosaic1[i][j] << " " << j*20+10 << " " << i*8 << " 0" << " 1 0 0 0 1 0 0 0 1 3024.dat\n";
+          output << " 1 " << mosaic1[i][j] << " " << j*4+10 << " " << i*8 << " 0" << " 1 0 0 0 1 0 0 0 1 3024.dat\n";
         }
       }
     }
@@ -1030,9 +1030,11 @@ void generateOutput2( vector< vector< int > > &mosaic1, vector< vector< int > > 
 
   for( int brick = 0; brick < 16; ++brick )
   {
-    int w = brickSizes2[brick][1];
+    int w = brickSizes2[brick][1]*2;
 
     int h = brickSizes2[brick][0];
+
+//    cout << w << " " << h << endl;
 
     if( width < w || height < h ) continue;
 
@@ -1056,35 +1058,41 @@ void generateOutput2( vector< vector< int > > &mosaic1, vector< vector< int > > 
 
       for( int y = i; y < i + h && !badColor; ++y )
       {
-        if( brick < 11 && ( j < 1 || mosaic2[y][j-1] == -1 ) )
+        if( brick < 11 && ( j < 2 || mosaic2[y][j-2] == -1 ) )
         {
           badColor = true; 
         }
       }
 
+      if( badColor ) continue;
+
+//      cout << "wh " << w << " " << h << endl;
+
       for( int y = i; y < i + h && !badColor; ++y )
       {
-        for( int x = j; x < j + w && !badColor; ++x )
+        for( int x = j; x < j + w && !badColor; x+=2 )
         {
+//          cout << w << " " << h << " " << " | " << j << " " << i << " | " << x << " " << y << " | " << mosaic2[y][x] << " " << squareColor << endl;
           if( mosaic2[y][x] != squareColor )
           {
             badColor = true;
           }
         }
       }
+//      cout << "here\n";
 
       if( !badColor )
       {
         for( int y = i; y < i + h; ++y )
         {
-          for( int x = j; x < j + w; ++x )
+          for( int x = j; x < j + w; x+=2 )
           {
             mosaic2[y][x] = -2;
           }
         }
 
         int bi = floor(77.0*si*i);
-        int bj = floor(30.8*si*j);
+        int bj = floor(15.4*si*j);
 
         int colorIndex = 0;
 
@@ -1100,7 +1108,7 @@ void generateOutput2( vector< vector< int > > &mosaic1, vector< vector< int > > 
         brickData.push_back({brick+18,colorIndex,bi,bj});
         brickUsed[brick+18][colorIndex] = true;
 
-        output << " 1 " << squareColor << " " << j*8 << " " << i*20+h*10 << " 0" << " 0 1 0 -1 0 0 0 0 1 " << brickNames3[brick] << endl;
+        output << " 1 " << squareColor << " " << j*4 << " " << i*20+h*10 << " 0" << " 0 1 0 -1 0 0 0 0 1 " << brickNames3[brick] << endl;
       }
     }
   }
@@ -1111,10 +1119,10 @@ void generateOutput2( vector< vector< int > > &mosaic1, vector< vector< int > > 
     {
       if( mosaic2[i][j] >= 0 )
       {
-        if( j < 1 || mosaic2[i][j-1] == -1 )
+        if( j < 1 || mosaic2[i][j-2] == -1 )
         {
           int bi = floor(77.0*si*i);
-          int bj = floor(30.8*si*j);
+          int bj = floor(15.4*si*j);
 
           int colorIndex = 0;
 
@@ -1130,12 +1138,12 @@ void generateOutput2( vector< vector< int > > &mosaic1, vector< vector< int > > 
           brickData.push_back({34,colorIndex,bi,bj});
           brickUsed[34][colorIndex] = true;
 
-          output << " 1 " << mosaic2[i][j] << " " << j*8 << " " << i*20+10 << " 0" << " 0 1 0 -1 0 0 0 0 1 30039.dat\n";
+          output << " 1 " << mosaic2[i][j] << " " << j*4 << " " << i*20+10 << " 0" << " 0 1 0 -1 0 0 0 0 1 30039.dat\n";
         }
         else
         {
           int bi = floor(77.0*si*i);
-          int bj = floor(30.8*si*j);
+          int bj = floor(15.4*si*j);
 
           int colorIndex = 0;
 
@@ -1151,7 +1159,7 @@ void generateOutput2( vector< vector< int > > &mosaic1, vector< vector< int > > 
           brickData.push_back({35,colorIndex,bi,bj});
           brickUsed[35][colorIndex] = true;
 
-          output << " 1 " << mosaic2[i][j] << " " << j*8 << " " << i*20+10 << " 0" << " 0 1 0 -1 0 0 0 0 1 3024.dat\n";
+          output << " 1 " << mosaic2[i][j] << " " << j*4 << " " << i*20+10 << " 0" << " 0 1 0 -1 0 0 0 0 1 3024.dat\n";
         }
       }
     }
@@ -1164,215 +1172,353 @@ void generateOutput2( vector< vector< int > > &mosaic1, vector< vector< int > > 
   buildImage( outputImage, width2, height2, brickData, dimensions, brickImages );
 }
 
-void bestSquare( int i1, int j1, int width, int height, vector< vector< vector< float > > > &floatData, vector< vector< vector< float > > > &floatData2, vector< vector< int > > &mosaic1, vector< vector< int > > &mosaic2, bool dither, float colors[][3], vector< int > colorsToUse )
+void reorder( int width, int height, vector< vector< int > > &mosaic1, vector< vector< int > > &mosaic2 )
 {
-  vector< vector< float > > tempFloatData, tempFloatData1, tempFloatData2;
+  int start = 0;
+  int end = start;
 
-  stringstream ss1, ss2;
-
-  double sumDifferences1 = 0;
-  double sumDifferences2 = 0;
-
-  vector< vector< int > > results1;
-  vector< vector< int > > results2;
-
-  for( int i = 0; i < 5; ++i )
+  while( start < width )
   {
-    for( int j = 0; j < 2; ++j )
+    int newStart = -1;
+    int startColor = -1;
+
+    for( int j = start; j < width+1; ++j )
     {
-      int bestColor = -1;
-      double bestDifference = 1000000000;
-      double bestDifference2 = 1000000000;
-      
-      float averageColor[3] = {0,0,0};
-
-      for( int y = i*2; y < i*2+2; ++y )
+      if( j == width )
       {
-        for( int x = j*5; x < j*5+5; ++x )
-        {
-          for( int i10 = 0; i10 < 3; ++i10 )
-          {
-            averageColor[i10] += floatData[i1+y][j1+x][i10];
-          }
-        }
+        end = width;
+        newStart = width;
+        break;
       }
 
-      for( int i10 = 0; i10 < 3; ++i10 )
+      for( int i = 0; i < 2; ++i )
       {
-        averageColor[i10] /= 10.0;
-      }
-
-      for( int k1 = 0; k1 < colorsToUse.size(); ++k1 )
-      {
-        int k = colorsToUse[k1];
-
-        int r = 0;
-        int g = 0;
-        int b = 0;
-
-        double difference = 0;
-
-        for( int y = i*2; y < i*2+2; ++y )
+        if( mosaic2[i][j] < 0 ) break;
+        if( startColor < 0 ) startColor = mosaic2[i][j];
+        if( mosaic2[i][j] != startColor )
         {
-          for( int x = j*5; x < j*5+5; ++x )
-          {
-            difference += de00( color_values[k][0], color_values[k][1], color_values[k][2], round(floatData2[i1+y][j1+x][0]), round(floatData2[i1+y][j1+x][1]), round(floatData2[i1+y][j1+x][2]) );
-          }
-        }
-
-        double difference2 = vips_col_dE00( colors[k][0], colors[k][1], colors[k][2], averageColor[0], averageColor[1], averageColor[2] );
-
-        if( difference2 < bestDifference2 )
-        {
-          bestDifference2 = difference2;
-          bestColor = k;
-        }
-
-        if( difference < bestDifference )
-        {
-          bestDifference = difference;
+          end = j;
+          newStart = j;
+          if( newStart == start ) newStart += 2;
+          break;
         }
       }
+      if( newStart != -1 ) break;
 
-      if( dither )
+      for( int i = 0; i < 5; ++i )
       {
-        float error[3];
-
-        for( int i10 = 0; i10 < 3; ++i10 )
+        if( mosaic1[i][j] < 0 ) break;
+        if( startColor < 0 ) startColor = mosaic1[i][j];
+        if( mosaic1[i][j] != startColor )
         {
-          error[i10] = averageColor[i10]-colors[bestColor][i10];
-        }
-
-        if( j1+j*5 < width - 5 )
-        {
-          for( int y = i*2; y < i*2+2; ++y )
-          {
-            for( int x = j*5; x < j*5+5; ++x )
-            {
-              int x1 = j1+x+5;
-              int y1 = i1+y;
-
-              tempFloatData.push_back({(float)x1,(float)y1,floatData[y1][x1][0],floatData[y1][x1][1],floatData[y1][x1][2]});
-
-              for( int i10 = 0; i10 < 3; ++i10 )
-              {
-                floatData[y1][x1][i10] += error[i10] * 7.0 / 16.0;
-                fit(floatData[y1][x1][i10],i10);
-              }
-
-              tempFloatData1.push_back({(float)x1,(float)y1,floatData[y1][x1][0],floatData[y1][x1][1],floatData[y1][x1][2]});
-            }
-          }
-        }
-
-        if( i1+i*2 < height - 2 )
-        {
-          if( j1+j > 0 )
-          {
-            for( int y = i*2; y < i*2+2; ++y )
-            {
-              for( int x = j*5; x < j*5+5; ++x )
-              {
-                int x1 = j1+x-5;
-                int y1 = i1+y+2;
-
-                tempFloatData.push_back({(float)x1,(float)y1,floatData[y1][x1][0],floatData[y1][x1][1],floatData[y1][x1][2]});
-
-                for( int i10 = 0; i10 < 3; ++i10 )
-                {
-                  floatData[y1][x1][i10] += error[i10] * 3.0 / 16.0;
-                  fit(floatData[y1][x1][i10],i10);
-                }
-
-                tempFloatData1.push_back({(float)x1,(float)y1,floatData[y1][x1][0],floatData[y1][x1][1],floatData[y1][x1][2]});
-              }
-            }
-          }
-
-          {
-            for( int y = i*2; y < i*2+2; ++y )
-            {
-              for( int x = j*5; x < j*5+5; ++x )
-              {
-                int x1 = j1+x;
-                int y1 = i1+y+2;
-
-                tempFloatData.push_back({(float)x1,(float)y1,floatData[y1][x1][0],floatData[y1][x1][1],floatData[y1][x1][2]});
-
-                for( int i10 = 0; i10 < 3; ++i10 )
-                {
-                  floatData[y1][x1][i10] += error[i10] * 5.0 / 16.0;
-                  fit(floatData[y1][x1][i10],i10);
-                }
-
-                tempFloatData1.push_back({(float)x1,(float)y1,floatData[y1][x1][0],floatData[y1][x1][1],floatData[y1][x1][2]});
-              }
-            }
-          }
-
-          if( j1+j*5 < width - 5 )
-          {
-            for( int y = i*2; y < i*2+2; ++y )
-            {
-              for( int x = j*5; x < j*5+5; ++x )
-              {
-                int x1 = j1+x+5;
-                int y1 = i1+y+2;
-
-                tempFloatData.push_back({(float)x1,(float)y1,floatData[y1][x1][0],floatData[y1][x1][1],floatData[y1][x1][2]});
-
-                for( int i10 = 0; i10 < 3; ++i10 )
-                {
-                  floatData[y1][x1][i10] += error[i10] * 1.0 / 16.0;
-                  fit(floatData[y1][x1][i10],i10);
-                }
-
-                tempFloatData1.push_back({(float)x1,(float)y1,floatData[y1][x1][0],floatData[y1][x1][1],floatData[y1][x1][2]});
-              }
-            }
-          }
+          end = j;
+          newStart = j;
+          if( newStart == start ) newStart += 5;
+          break;
         }
       }
+      if( newStart != -1 ) break;
+    }
 
-      sumDifferences1 += bestDifference;
+    int length = end - start;
 
-      results1.push_back( {j1/5+j,i1/2+i,color_codes[bestColor]} );
+    int firstEnd;
+
+    for( int l = length, fe = 0; l >= 0; l -= 5, fe += 5 )
+    {
+      if( l == 0 )
+      {
+        firstEnd = end;
+      }
+      else if( l < 5 && l%2 == 0 )
+      {
+        firstEnd = start + fe;
+      }
+      else if( l < 5 && l%2 == 1 )
+      {
+        firstEnd = start + fe - 5;
+      }
+    }
+
+    for( int j = start; j < end; ++j )
+    {
+      for( int i = 0; i < 2; ++i )
+      {
+        mosaic2[i][j] = -1;
+      }
+
+      for( int i = 0; i < 5; ++i )
+      {
+        mosaic1[i][j] = -1;
+      }
+    }
+
+    for( int j = start; j < firstEnd; j+=5 )
+    {
+      for( int i = 0; i < 5; ++i )
+      {
+        mosaic1[i][j] = startColor;
+      }
+    }
+
+    for( int j = firstEnd; j < end; j+=2 )
+    {
+      for( int i = 0; i < 2; ++i )
+      {
+        mosaic2[i][j] = startColor;
+      }
+    }
+
+    start = newStart;
+  }
+}
+
+void bestRow( int i1, int width, int height, vector< vector< vector< float > > > &floatData, vector< vector< int > > &mosaic1, vector< vector< int > > &mosaic2, bool dither, float colors[][3], vector< int > colorsToUse )
+{  
+  vector< int > allIndices( width+1, -1 );
+  vector< float > allDifferences( width+1, -1 );
+
+  vector< vector< int > > allMosaic1( width+1, vector< int >( 5, -1 ) ), allMosaic2( width+1, vector< int >( 5, -1 ) );
+
+  vector< vector< vector< vector< float > > > > allFloatData(width+1, vector< vector< vector< float > > >( 15, vector< vector< float > >( 15 ) ) );
+
+  allDifferences[0] = 0;
+
+  for( int i = 0; i < 15; ++i )
+  {
+    if( i1+i >= height ) break;
+    for( int j = 0; j < 10; ++j )
+    {
+      allFloatData[0][i][j+5] = floatData[i1+i][j];
     }
   }
 
-  for( int i = tempFloatData.size()-1; i >= 0; --i )
+  for( int k = 1; k < width-1; ++k )
   {
-    floatData[(int)tempFloatData[i][1]][(int)tempFloatData[i][0]][0] = tempFloatData[i][2];
-    floatData[(int)tempFloatData[i][1]][(int)tempFloatData[i][0]][1] = tempFloatData[i][3];
-    floatData[(int)tempFloatData[i][1]][(int)tempFloatData[i][0]][2] = tempFloatData[i][4];
+    for( int i = 0; i < 15; ++i )
+    {
+      if( i1+i >= height ) break;
+      for( int j = 5; j < 10; ++j )
+      {
+        if( k+j >= width ) break;
+
+        allFloatData[k][i][j+5] = floatData[i1+i][k+j];
+      }
+    }
   }
 
-  tempFloatData.clear();
-
-  for( int i = 0; i < 2; ++i )
+  for( int j1 = 0; j1 < width-1; ++j1 )
   {
-    for( int j = 0; j < 5; ++j )
-    {
-      int bestColor = -1;
-      double bestDifference = 1000000000;
-      double bestDifference2 = 1000000000;
-      
-      float averageColor[3] = {0,0,0};
+    if( allDifferences[j1] < 0 ) continue;
+  
+    if( j1 == 1 || j1 == 3 ) continue;
 
-      for( int y = i*5; y < i*5+5; ++y )
+    float tempDifference = allDifferences[j1];
+    vector< vector< vector< float > > > tempFloatData = allFloatData[j1];
+
+    vector< int > tempMosaic(5);
+
+    if( j1 < width-4 )
+    {
+      for( int i = 0; i < 5; ++i )
       {
-        for( int x = j*2; x < j*2+2; ++x )
+        int bestColor = -1;
+
+        float averageColor[3] = {0,0,0};
+
+        float bestDifference = -1;
+
+        if( dither )
         {
+          for( int y = i*2; y < i*2+2; ++y )
+          {
+            for( int x = 0; x < 5; ++x )
+            {
+              for( int i10 = 0; i10 < 3; ++i10 )
+              {
+                averageColor[i10] += tempFloatData[y][x+5][i10];
+              }
+            }
+          }
+
           for( int i10 = 0; i10 < 3; ++i10 )
           {
-            averageColor[i10] += floatData[i1+y][j1+x][i10];
+            averageColor[i10] /= 10.0;
+          }
+        }
+
+        for( int k1 = 0; k1 < colorsToUse.size(); ++k1 )
+        {
+          int k = colorsToUse[k1];
+
+          int r = 0;
+          int g = 0;
+          int b = 0;
+
+          float difference = 0;
+
+          for( int y = i*2; y < i*2+2; ++y )
+          {
+            for( int x = 0; x < 5; ++x )
+            {
+              float tempD = 0;
+              for( int i10 = 0; i10 < 3; ++i10 )
+              {
+                float diff = colors[k][i10] - tempFloatData[y][x+5][i10];
+                tempD += diff*diff;
+              }
+              difference += sqrt(tempD);
+            }
+          }
+
+          if( bestDifference < 0 || difference < bestDifference )
+          {
+            bestDifference = difference;
+            bestColor = k;
+          }
+        }
+
+        tempDifference += bestDifference;
+        tempMosaic[i] = bestColor;
+
+        if( dither )
+        {
+          float error[3];
+
+          for( int i10 = 0; i10 < 3; ++i10 )
+          {
+            error[i10] = averageColor[i10]-colors[bestColor][i10];
+          }
+
+          if( j1 < width - 10 )
+          {
+            for( int y = i*2; y < i*2+2; ++y )
+            {
+              for( int x = 0; x < 5; ++x )
+              {
+                int x1 = x+10;
+                int y1 = y;
+
+                for( int i10 = 0; i10 < 3; ++i10 )
+                {
+                  tempFloatData[y1][x1][i10] += error[i10] * 7.0 / 16.0;
+                  fit(tempFloatData[y1][x1][i10],i10);
+                }
+              }
+            }
+          }
+
+          if( i1+i*2 < height - 2 )
+          {
+            if( j1 > 4 )
+            {
+              for( int y = i*2; y < i*2+2; ++y )
+              {
+                for( int x = 0; x < 5; ++x )
+                {
+                  int x1 = x;
+                  int y1 = y+2;
+
+                  for( int i10 = 0; i10 < 3; ++i10 )
+                  {
+                    tempFloatData[y1][x1][i10] += error[i10] * 3.0 / 16.0;
+                    fit(tempFloatData[y1][x1][i10],i10);
+                  }
+                }
+              }
+            }
+
+            {
+              for( int y = i*2; y < i*2+2; ++y )
+              {
+                for( int x = 0; x < 5; ++x )
+                {
+                  int x1 = x+5;
+                  int y1 = y+2;
+
+                  for( int i10 = 0; i10 < 3; ++i10 )
+                  {
+                    tempFloatData[y1][x1][i10] += error[i10] * 5.0 / 16.0;
+                    fit(tempFloatData[y1][x1][i10],i10);
+                  }
+                }
+              }
+            }
+
+            if( j1 < width - 10 )
+            {
+              for( int y = i*2; y < i*2+2; ++y )
+              {
+                for( int x = 0; x < 5; ++x )
+                {
+                  int x1 = x+10;
+                  int y1 = y+2;
+
+                  for( int i10 = 0; i10 < 3; ++i10 )
+                  {
+                    tempFloatData[y1][x1][i10] += error[i10] * 1.0 / 16.0;
+                    fit(tempFloatData[y1][x1][i10],i10);
+                  }
+                }
+              }
+            }
           }
         }
       }
 
-      for( int i10 = 0; i10 < 3; ++i10 )
+      if( allDifferences[j1+5] < 0 || tempDifference < allDifferences[j1+5] )
       {
-        averageColor[i10] /= 10.0;
+        allDifferences[j1+5] = tempDifference;
+
+        for( int i = 0; i < 5; ++i )
+        {
+          allMosaic1[j1+5][i] = color_codes[tempMosaic[i]];
+        }
+
+        allIndices[j1+5] = j1;
+
+        for( int i = 0; i < 15; ++i )
+        {
+          for( int j = 0; j < 10; ++j )
+          {
+            allFloatData[j1+5][i][j] = tempFloatData[i][j+5];
+          }
+        }
+
+        if( dither )
+        {
+          tempFloatData = allFloatData[j1];
+        }
+      }
+
+      tempDifference = allDifferences[j1];
+    }
+
+    for( int i = 0; i < 2; ++i )
+    {
+      int bestColor = -1;
+
+      float averageColor[3] = {0,0,0};
+
+      double bestDifference = -1;
+
+      if( dither )
+      {
+        for( int y = i*5; y < i*5+5; ++y )
+        {
+          for( int x = 0; x < 2; ++x )
+          {
+            for( int i10 = 0; i10 < 3; ++i10 )
+            {
+              averageColor[i10] += tempFloatData[y][x+5][i10];
+            }
+          }
+        }
+
+        for( int i10 = 0; i10 < 3; ++i10 )
+        {
+          averageColor[i10] /= 10.0;
+        }
       }
 
       for( int k1 = 0; k1 < colorsToUse.size(); ++k1 )
@@ -1387,25 +1533,27 @@ void bestSquare( int i1, int j1, int width, int height, vector< vector< vector< 
 
         for( int y = i*5; y < i*5+5; ++y )
         {
-          for( int x = j*2; x < j*2+2; ++x )
+          for( int x = 0; x < 2; ++x )
           {
-            difference += de00( color_values[k][0], color_values[k][1], color_values[k][2], round(floatData2[i1+y][j1+x][0]), round(floatData2[i1+y][j1+x][1]), round(floatData2[i1+y][j1+x][2]) );
+            float tempD = 0;
+            for( int i10 = 0; i10 < 3; ++i10 )
+            {
+              float diff = colors[k][i10] - tempFloatData[y][x+5][i10];
+              tempD += diff*diff;
+            }
+            difference += sqrt(tempD);
           }
         }
 
-        double difference2 = vips_col_dE00( colors[k][0], colors[k][1], colors[k][2], averageColor[0], averageColor[1], averageColor[2] );
-
-        if( difference2 < bestDifference2 )
-        {
-          bestDifference2 = difference2;
-          bestColor = k;
-        }
-
-        if( difference < bestDifference )
+        if( bestDifference < 0 || difference < bestDifference )
         {
           bestDifference = difference;
+          bestColor = k;
         }
       }
+
+      tempDifference += bestDifference;
+      tempMosaic[i] = bestColor;
 
       if( dither )
       {
@@ -1416,48 +1564,40 @@ void bestSquare( int i1, int j1, int width, int height, vector< vector< vector< 
           error[i10] = averageColor[i10]-colors[bestColor][i10];
         }
 
-        if( j1+j*2 < width - 2 )
+        if( j1 < width - 4 )
         {
           for( int y = i*5; y < i*5+5; ++y )
           {
-            for( int x = j*2; x < j*2+2; ++x )
+            for( int x = 0; x < 2; ++x )
             {
-              int x1 = j1+x+2;
-              int y1 = i1+y;
-
-              tempFloatData.push_back({(float)x1,(float)y1,floatData[y1][x1][0],floatData[y1][x1][1],floatData[y1][x1][2]});
+              int x1 = x+7;
+              int y1 = y;
 
               for( int i10 = 0; i10 < 3; ++i10 )
               {
-                floatData[y1][x1][i10] += error[i10] * 7.0 / 16.0;
-                fit(floatData[y1][x1][i10],i10);
+                tempFloatData[y1][x1][i10] += error[i10] * 7.0 / 16.0;
+                fit(tempFloatData[y1][x1][i10],i10);
               }
-
-              tempFloatData2.push_back({(float)x1,(float)y1,floatData[y1][x1][0],floatData[y1][x1][1],floatData[y1][x1][2]});
             }
           }
         }
 
         if( i1+i*5 < height - 5 )
         {
-          if( j1+j > 0 )
+          if( j1 > 1 )
           {
             for( int y = i*5; y < i*5+5; ++y )
             {
-              for( int x = j*2; x < j*2+2; ++x )
+              for( int x = 0; x < 2; ++x )
               {
-                int x1 = j1+x-2;
-                int y1 = i1+y+5;
-
-                tempFloatData.push_back({(float)x1,(float)y1,floatData[y1][x1][0],floatData[y1][x1][1],floatData[y1][x1][2]});
+                int x1 = x+3;
+                int y1 = y+5;
 
                 for( int i10 = 0; i10 < 3; ++i10 )
                 {
-                  floatData[y1][x1][i10] += error[i10] * 3.0 / 16.0;
-                  fit(floatData[y1][x1][i10],i10);
+                  tempFloatData[y1][x1][i10] += error[i10] * 3.0 / 16.0;
+                  fit(tempFloatData[y1][x1][i10],i10);
                 }
-
-                tempFloatData2.push_back({(float)x1,(float)y1,floatData[y1][x1][0],floatData[y1][x1][1],floatData[y1][x1][2]});
               }
             }
           }
@@ -1465,114 +1605,128 @@ void bestSquare( int i1, int j1, int width, int height, vector< vector< vector< 
           {
             for( int y = i*5; y < i*5+5; ++y )
             {
-              for( int x = j*2; x < j*2+2; ++x )
+              for( int x = 0; x < 2; ++x )
               {
-                int x1 = j1+x;
-                int y1 = i1+y+5;
-
-                tempFloatData.push_back({(float)x1,(float)y1,floatData[y1][x1][0],floatData[y1][x1][1],floatData[y1][x1][2]});
+                int x1 = x+5;
+                int y1 = y+5;
 
                 for( int i10 = 0; i10 < 3; ++i10 )
                 {
-                  floatData[y1][x1][i10] += error[i10] * 5.0 / 16.0;
-                  fit(floatData[y1][x1][i10],i10);
+                  tempFloatData[y1][x1][i10] += error[i10] * 5.0 / 16.0;
+                  fit(tempFloatData[y1][x1][i10],i10);
                 }
-
-                tempFloatData2.push_back({(float)x1,(float)y1,floatData[y1][x1][0],floatData[y1][x1][1],floatData[y1][x1][2]});
               }
             }
           }
 
-          if( j1+j*2 < width - 2 )
+          if( j1 < width - 4 )
           {
             for( int y = i*5; y < i*5+5; ++y )
             {
-              for( int x = j*2; x < j*2+2; ++x )
+              for( int x = 0; x < 2; ++x )
               {
-                int x1 = j1+x+2;
-                int y1 = i1+y+5;
-
-                tempFloatData.push_back({(float)x1,(float)y1,floatData[y1][x1][0],floatData[y1][x1][1],floatData[y1][x1][2]});
+                int x1 = x+7;
+                int y1 = y+5;
 
                 for( int i10 = 0; i10 < 3; ++i10 )
                 {
-                  floatData[y1][x1][i10] += error[i10] * 1.0 / 16.0;
-                  fit(floatData[y1][x1][i10],i10);
+                  tempFloatData[y1][x1][i10] += error[i10] * 1.0 / 16.0;
+                  fit(tempFloatData[y1][x1][i10],i10);
                 }
-
-                tempFloatData2.push_back({(float)x1,(float)y1,floatData[y1][x1][0],floatData[y1][x1][1],floatData[y1][x1][2]});
               }
             }
           }
         }
       }
+    }
 
-      sumDifferences2 += bestDifference;
+    if( allDifferences[j1+2] < 0 || tempDifference < allDifferences[j1+2] )
+    {
+      allDifferences[j1+2] = tempDifference;
 
-      results2.push_back( {j1/2+j,i1/5+i,color_codes[bestColor]} );
+      for( int i = 0; i < 2; ++i )
+      {
+        allMosaic2[j1+2][i] = color_codes[tempMosaic[i]];
+      }
+
+      allIndices[j1+2] = j1;
+
+      for( int i = 0; i < 15; ++i )
+      {
+        for( int j = 0; j < 10; ++j )
+        {
+          allFloatData[j1+2][i][j] = tempFloatData[i][j+2];
+        }
+      }
     }
   }
 
-  for( int i = tempFloatData.size()-1; i >= 0; --i )
+  vector< vector< int > > tempMosaic1( 5, vector< int >( width, -1 ) ), tempMosaic2( 2, vector< int >( width, -1 ) );
+
+  vector< int > ind;
+
+  for( int k = width; k > 0; k = allIndices[k] )
   {
-    floatData[(int)tempFloatData[i][1]][(int)tempFloatData[i][0]][0] = tempFloatData[i][2];
-    floatData[(int)tempFloatData[i][1]][(int)tempFloatData[i][0]][1] = tempFloatData[i][3];
-    floatData[(int)tempFloatData[i][1]][(int)tempFloatData[i][0]][2] = tempFloatData[i][4];
+    ind.push_back(k);
+  }
+  ind.push_back(0);
+
+  for( int k1 = ind.size()-1; k1 > 0; --k1 )
+  {
+    int ik1 = ind[k1];
+    int ik2 = ind[k1-1];
+
+    int length = ik2-ik1;
+    if( length == 2 )
+    {
+      for( int i = 0; i < 2; ++i )
+      {
+        tempMosaic2[i][ik1] = allMosaic2[ik2][i];
+      }
+    }
+    else
+    {
+      for( int i = 0; i < 5; ++i )
+      {
+        tempMosaic1[i][ik1] = allMosaic1[ik2][i];
+      }
+    }
+
+    if( dither )
+    {
+      for( int i = 10; i < 15; ++i )
+      {
+        if( i1+i >= height ) break;
+        for( int j = 0; j < 5; ++j )
+        {
+          if( ik2+j-5 < 0 ) continue;
+          if( ik2+j-5 >= width ) break;
+          floatData[i1+i][ik2+j-5] = allFloatData[ik2][i][j];
+        }
+      }
+    }
   }
 
-  if( sumDifferences1 <= sumDifferences2 )
-  {
-    for( int i = 0; i < 10; ++i )
-    {
-      mosaic1[results1[i][1]][results1[i][0]] = results1[i][2];
-    }
+  reorder( width, height, tempMosaic1, tempMosaic2 );
 
-    for( int i = 0; i < tempFloatData1.size(); ++i )
-    {
-      floatData[(int)tempFloatData1[i][1]][(int)tempFloatData1[i][0]][0] = tempFloatData1[i][2];
-      floatData[(int)tempFloatData1[i][1]][(int)tempFloatData1[i][0]][1] = tempFloatData1[i][3];
-      floatData[(int)tempFloatData1[i][1]][(int)tempFloatData1[i][0]][2] = tempFloatData1[i][4];
-    }
+  for( int i = 0; i < 5; ++i )
+  {
+    mosaic1[i1/2+i] = tempMosaic1[i];
   }
-  else
-  {
-    for( int i = 0; i < 10; ++i )
-    {
-      mosaic2[results2[i][1]][results2[i][0]] = results2[i][2];
-    }
 
-    for( int i = 0; i < tempFloatData2.size(); ++i )
-    {
-      floatData[(int)tempFloatData2[i][1]][(int)tempFloatData2[i][0]][0] = tempFloatData2[i][2];
-      floatData[(int)tempFloatData2[i][1]][(int)tempFloatData2[i][0]][1] = tempFloatData2[i][3];
-      floatData[(int)tempFloatData2[i][1]][(int)tempFloatData2[i][0]][2] = tempFloatData2[i][4];
-    }
+  for( int i = 0; i < 2; ++i )
+  {
+    mosaic2[i1/5+i] = tempMosaic2[i];
   }
 }
 
 void legoMosaicThread2( int threadIdx, int numThreads, int width, int height, float colors[68][3], vector< vector< int > > &mosaic1, vector< vector< int > > &mosaic2, vector< vector< vector< float > > > &floatData, vector< vector< vector< float > > > &floatData2, vector< int > &colorsToUse, bool dither, condition_variable *cv, ProgressBar *buildingMosaic )
 {
-  mutex m;
-  unique_lock<mutex> lk(m);
-
   for( int i = threadIdx*10; i < height; i += numThreads*10 )
   {
-    for( int j = 0; j < width; j+=10 )
-    {
-      while( dither && i > 0 && j < width-10 && ( mosaic2[i/5-1][j/2+1] < 0 && mosaic1[i/2-1][j/5+1] < 0 ) )
-      {
-        cv[threadIdx].wait(lk);
-      }
+    bestRow( i, width, height, floatData, mosaic1, mosaic2, dither, colors, colorsToUse );
 
-      int bestColor = -1;
-      double bestDifference = 1000000000;
-
-      bestSquare( i, j, width, height, floatData, floatData2, mosaic1, mosaic2, dither, colors, colorsToUse );
-  
-      cv[(threadIdx+1)%numThreads].notify_one();
-
-      if( threadIdx == 0 && j%500 == 0 ) buildingMosaic->Increment();
-    }
+    if( threadIdx == 0 ) buildingMosaic->Increment();
   }
 }
 
@@ -1669,10 +1823,12 @@ void generateLegoMosaic2( string inputImage, string outputFile, int numAcross, b
 
   floatData2 = floatData;
 
-  vector< vector< int > > mosaic1( height/2, vector< int > ( width/5, -1 ) );
-  vector< vector< int > > mosaic2( height/5, vector< int > ( width/2, -1 ) );
+  if( dither ) threads = 1;
 
-  ProgressBar *buildingMosaic = new ProgressBar(ceil((double)height/(10*threads))*ceil((double)width/500)+1, "Building Mosaic");
+  vector< vector< int > > mosaic1( height/2, vector< int > ( width, -1 ) );
+  vector< vector< int > > mosaic2( height/5, vector< int > ( width, -1 ) );
+
+  ProgressBar *buildingMosaic = new ProgressBar(ceil((double)height/(10*threads)), "Building Mosaic");
   
   condition_variable *cv = new condition_variable[threads];
 
