@@ -19,6 +19,8 @@ int main( int argc, char **argv )
 
     ValueArg<double> gammaArg( "g", "gamma", "Gamma exponent", false, 1.0, "double", cmd );
 
+    ValueArg<int> dilateDistanceArg( "e", "expand", "Expand dark areas", false, 0, "int", cmd );
+
     ValueArg<int> tileSizeArg( "t", "tileSize", "Size of the lego tiles in pixels", false, 10, "int", cmd );
 
     ValueArg<int> numberArg( "n", "numHorizontal", "Number of tiles horizontally", true, 20, "int", cmd);
@@ -37,11 +39,12 @@ int main( int argc, char **argv )
     string colorName                  = colorNameArg.getValue();
     int numHorizontal                 = numberArg.getValue();
     int tileSize                      = tileSizeArg.getValue();
+    int dilateDistance                = dilateDistanceArg.getValue();
     double gamma                      = gammaArg.getValue();
 
     if( VIPS_INIT( argv[0] ) ) return( -1 );
 
-    RunLegoMosaic( inputName, outputName, numHorizontal, tileSize, sidesOut, dither, randomize, gamma, colorName );
+    RunLegoMosaic( inputName, outputName, numHorizontal, tileSize, sidesOut, dither, randomize, dilateDistance, gamma, colorName );
   }
   catch (ArgException &e)  // catch any exceptions
   {

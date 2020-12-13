@@ -47,6 +47,48 @@ void rgbToLab( int r, int g, int b, float &l1, float &a1, float &b1 )
   vips_col_XYZ2Lab( l1, a1, b1, &l1, &a1, &b1 );
 }
 
+void dilate( int width, int height, unsigned char * c, unsigned char * c2, int dilateDistance )
+{
+  for( int i = 0; i < height; ++i )
+  {
+    for( int j = 0; j < width; ++j )
+    {
+      float bestL = -1;
+      for( int i1 = -dilateDistance; i1 <= dilateDistance; ++i1 )
+      {
+        for( int j1 = -dilateDistance; j1 <= dilateDistance; ++j1 )
+        {
+          if( j+j1 < 0 || j+j1 >= width ) continue;
+
+          float r = c[3*((i+i1)*width+j+j1)+0];
+          float g = c[3*((i+i1)*width+j+j1)+1];
+          float b = c[3*((i+i1)*width+j+j1)+2];
+
+          float l = 0.2126*r + 0.7152*g + 0.0722*b;
+
+          if( l <= 0.0031308 )
+          {
+            l = 12.92 * l;
+          }
+          else
+          {
+            l = 1.055 * pow( l, 1.0/2.4 ) - 0.055;
+          }
+
+          if( bestL < 0 || l < bestL )
+          {
+            bestL = l;
+
+            c2[3*(i*width+j)+0] = r;
+            c2[3*(i*width+j)+1] = g;
+            c2[3*(i*width+j)+2] = b;
+          }
+        }
+      }
+    }
+  }
+}
+
 void changeColorspace( Tree &tree, Point &center, unsigned char * c, float * c2, int start, int end, int width, double gamma, bool gammutMapping, ProgressBar * changingColorspace, bool labSpace, bool quiet )
 {
   bool show = !quiet && !(start);
@@ -692,10 +734,10 @@ void legoMosaicThread( int threadIdx, int numThreads, int width, int height, flo
   }
 }
 
-void generateLegoMosaic( string inputImage, string outputImage, int numAcross, bool dither, bool randomize, double gamma, vector< int > &colorsToUse )
+void generateLegoMosaic( string inputImage, string outputImage, int numAcross, bool dither, bool randomize, int dilateDistance, double gamma, vector< int > &colorsToUse )
 {
   // Load input image
-  VImage image = VImage::thumbnail((char *)inputImage.c_str(),numAcross,VImage::option()->set( "auto_rotate", true ));//.flip(VIPS_DIRECTION_HORIZONTAL);
+  VImage image = VImage::vipsload( (char *)inputImage.c_str() ).autorot();
 
   // Convert to a three band image
   if( image.bands() == 1 )
@@ -711,7 +753,18 @@ void generateLegoMosaic( string inputImage, string outputImage, int numAcross, b
   int height = image.height();
 
   // Get image data
-  unsigned char * inputData = ( unsigned char * )image.data();
+  unsigned char * inputData2 = ( unsigned char * )image.data();
+  unsigned char * inputData3 = new unsigned char[width*height*3];
+
+  dilate( width, height, inputData2, inputData3, dilateDistance );
+
+  VImage image2 = VImage::new_from_memory( inputData3, width*height*3, width, height, 3, VIPS_FORMAT_UCHAR ).thumbnail_image(numAcross);//.flip(VIPS_DIRECTION_HORIZONTAL);
+
+  width = image2.width();
+  height = image2.height();
+
+  unsigned char * inputData = ( unsigned char * )image2.data();
+
   float * c2 = new float[3*width*height];
 
   vector< vector< vector< float > > > floatData(height,vector< vector< float > >(width,vector< float >(3,0)));
@@ -1730,10 +1783,10 @@ void legoMosaicThread2( int threadIdx, int numThreads, int width, int height, fl
   }
 }
 
-void generateLegoMosaic2( string inputImage, string outputFile, int numAcross, bool dither, bool randomize, double gamma, vector< int > &colorsToUse )
+void generateLegoMosaic2( string inputImage, string outputFile, int numAcross, bool dither, bool randomize, float dilateDistance, double gamma, vector< int > &colorsToUse )
 {
   // Load input image
-  VImage image = VImage::thumbnail((char *)inputImage.c_str(),(numAcross-numAcross%2)*5,VImage::option()->set( "auto_rotate", true ));//.flip(VIPS_DIRECTION_HORIZONTAL);
+  VImage image = VImage::vipsload( (char *)inputImage.c_str() ).autorot();
 
   // Convert to a three band image
   if( image.bands() == 1 )
@@ -1748,13 +1801,24 @@ void generateLegoMosaic2( string inputImage, string outputFile, int numAcross, b
   int width = image.width();
   int height = image.height();
 
+  // Get image data
+  unsigned char * inputData2 = ( unsigned char * )image.data();
+  unsigned char * inputData3 = new unsigned char[width*height*3];
+
+  dilate( width, height, inputData2, inputData3, dilateDistance );
+
+  VImage image2 = VImage::new_from_memory( inputData3, width*height*3, width, height, 3, VIPS_FORMAT_UCHAR ).thumbnail_image((numAcross-numAcross%2)*5);//.flip(VIPS_DIRECTION_HORIZONTAL);
+
+  width = image2.width();
+  height = image2.height();
+
   width -= width%10;
   height -= height%10;
 
-  image = image.extract_area(0,0,width,height);
+  image2 = image2.extract_area(0,0,width,height);
 
-  // Get image data
-  unsigned char * inputData = ( unsigned char * )image.data();
+  unsigned char * inputData = ( unsigned char * )image2.data();
+
   float * c2 = new float[3*width*height];
 
   vector< vector< vector< float > > > floatData(height,vector< vector< float > >(width,vector< float >(3,0))), floatData2;
@@ -1846,7 +1910,7 @@ void generateLegoMosaic2( string inputImage, string outputFile, int numAcross, b
   generateOutput2( mosaic1, mosaic2, outputFile, randomize );
 }
 
-void RunLegoMosaic( string inputName, string outputName, int numHorizontal, int tileSize, bool sidesOut, bool dither, bool randomize, double gamma, string colorName )
+void RunLegoMosaic( string inputName, string outputName, int numHorizontal, int tileSize, bool sidesOut, bool dither, bool randomize, int dilateDistance, double gamma, string colorName )
 {
   tileSize = max( tileSize, 5 );
   tileSize = min( tileSize, 77 );
@@ -1878,10 +1942,10 @@ void RunLegoMosaic( string inputName, string outputName, int numHorizontal, int 
 
   if( !sidesOut )
   {
-    generateLegoMosaic( inputName, outputName, numHorizontal, dither, randomize, gamma, colorsToUse );
+    generateLegoMosaic( inputName, outputName, numHorizontal, dither, randomize, dilateDistance, gamma, colorsToUse );
   }
   else
   {
-    generateLegoMosaic2( inputName, outputName, numHorizontal, dither, randomize, gamma, colorsToUse );    
+    generateLegoMosaic2( inputName, outputName, numHorizontal, dither, randomize, dilateDistance, gamma, colorsToUse );    
   }
 }

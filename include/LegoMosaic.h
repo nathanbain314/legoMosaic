@@ -300,4 +300,4 @@ const int color_values[68][3] =
   {159,154,147}
 };
 
-void RunLegoMosaic( string inputName, string outputName, int numHorizontal, int tileSize, bool sidesOut, bool dither, bool randomize, double gamma, string colorName );
+void RunLegoMosaic( string inputName, string outputName, int numHorizontal, int tileSize, bool sidesOut, bool dither, bool randomize, int dilateDistance, double gamma, string colorName );
