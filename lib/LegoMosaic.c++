@@ -56,6 +56,7 @@ void dilate( int width, int height, unsigned char * c, unsigned char * c2, int d
       float bestL = -1;
       for( int i1 = -dilateDistance; i1 <= dilateDistance; ++i1 )
       {
+        if( i+i1 < 0 || i+i1 >= height ) continue;
         for( int j1 = -dilateDistance; j1 <= dilateDistance; ++j1 )
         {
           if( j+j1 < 0 || j+j1 >= width ) continue;
