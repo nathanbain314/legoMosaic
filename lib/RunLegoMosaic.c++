@@ -15,7 +15,7 @@ int main( int argc, char **argv )
 
     SwitchArg ditherArg( "d", "dither", "Use dithering in the mosaic", cmd, false );
 
-    SwitchArg sidesOutArg( "s", "sidesOut", "Generate lego mosaic with sides faced outwards", cmd, false );
+    ValueArg<int> styleArg( "s", "style", "0 = studs-out; 1 = sides-out; 2 = more blocks; 3 = halfscale", false, 0, "int", cmd );
 
     ValueArg<double> gammaArg( "g", "gamma", "Gamma exponent", false, 1.0, "double", cmd );
 
@@ -33,7 +33,7 @@ int main( int argc, char **argv )
 
     bool randomize                    = randomizeArg.getValue();
     bool dither                       = ditherArg.getValue();
-    bool sidesOut                     = sidesOutArg.getValue();
+    int style                         = styleArg.getValue();
     string inputName                  = pictureArg.getValue();
     string outputName                 = outputArg.getValue();
     string colorName                  = colorNameArg.getValue();
@@ -44,7 +44,7 @@ int main( int argc, char **argv )
 
     if( VIPS_INIT( argv[0] ) ) return( -1 );
 
-    RunLegoMosaic( inputName, outputName, numHorizontal, tileSize, sidesOut, dither, randomize, dilateDistance, gamma, colorName );
+    RunLegoMosaic( inputName, outputName, numHorizontal, tileSize, style, dither, randomize, dilateDistance, gamma, colorName );
   }
   catch (ArgException &e)  // catch any exceptions
   {
